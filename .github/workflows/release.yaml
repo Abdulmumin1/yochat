@@ -22,18 +22,19 @@ jobs:
       # Define a matrix of operating systems and architectures to build for
       matrix:
         os: [linux, windows, darwin]
-        arch: [amd64, arm64]
+        # Added '386' to the architectures list to include 32-bit builds
+        arch: [amd64, arm64, 386]
         # Exclude unsupported or less common combinations to speed up builds
         exclude:
           # Windows ARM64 cross-compilation can be more complex, often requiring specific SDKs or CGO considerations.
           # If your app needs this, you might need a more specialized build step.
           - os: windows
             arch: arm64
-          # Older 32-bit architectures are often not needed, but can be added if required
-          - os: linux
-            arch: 386
-          - os: darwin
-            arch: 386
+          # Removed exclusions for 386 builds, as they are now explicitly included
+          # - os: linux
+          #   arch: 386
+          # - os: darwin
+          #   arch: 386
 
     steps:
       - name: Checkout code
@@ -90,7 +91,6 @@ jobs:
         uses: actions/upload-artifact@v4 # Action to upload build artifacts
         with:
           # The name of the artifact will include the OS and architecture
-          # Changed from "my-app" to "yochat"
           name: yochat-${{ matrix.os }}-${{ matrix.arch }}
           # The path to the archive. Use a wildcard to match the .zip or .tar.gz extension.
           path: yochat-${{ matrix.os }}-${{ matrix.arch }}*
