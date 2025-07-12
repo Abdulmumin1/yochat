@@ -4,7 +4,6 @@ name: Go Cross-Compile
 
 # This workflow will run on:
 # 1. Every push to the 'main' branch (useful for testing builds)
-# 2. When a new GitHub Release is published (to create and attach release assets)
 on:
   push:
     branches:
@@ -75,8 +74,13 @@ jobs:
           ARCHIVE_NAME="${BASE_BINARY_NAME}-${{ matrix.os }}-${{ matrix.arch }}"
           if [ "${{ matrix.os }}" = "windows" ]; then
             ARCHIVE_NAME="${ARCHIVE_NAME}.zip"
-            # Create a zip archive for Windows
-            zip -r "$ARCHIVE_NAME" "$EXECUTABLE_NAME"
+            # Create a temporary directory for zipping to ensure a flat structure within the zip
+            mkdir -p temp_zip_contents
+            mv "$EXECUTABLE_NAME" temp_zip_contents/
+            # Change into the temp directory, create the zip, then move back
+            # This ensures that when unzipped, the executable is at the root of the extracted content
+            (cd temp_zip_contents && zip -r "../$ARCHIVE_NAME" "$EXECUTABLE_NAME")
+            rm -rf temp_zip_contents # Clean up the temporary directory
           else
             ARCHIVE_NAME="${ARCHIVE_NAME}.tar.gz"
             # Create a tar.gz archive for Linux and macOS
