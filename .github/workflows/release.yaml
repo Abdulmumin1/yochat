@@ -8,7 +8,7 @@ name: Go Cross-Compile and Release
 on:
   push:
     branches:
-      - master
+      - main # Or 'master', depending on your default branch name
   release:
     types: [published]
 
@@ -50,11 +50,13 @@ jobs:
           export GOOS=${{ matrix.os }}    # Target Operating System
           export GOARCH=${{ matrix.arch }} # Target Architecture
 
-          # Define the output filename based on OS and architecture
-          # Windows executables typically have a .exe extension
-          BINARY_NAME="my-app-${{ matrix.os }}-${{ matrix.arch }}"
+          # Define the base name for the binary
+          BASE_BINARY_NAME="yochat"
+
+          # Define the output filename for the executable itself
+          EXECUTABLE_NAME="${BASE_BINARY_NAME}"
           if [ "${{ matrix.os }}" = "windows" ]; then
-            BINARY_NAME="${BINARY_NAME}.exe"
+            EXECUTABLE_NAME="${EXECUTABLE_NAME}.exe"
           fi
 
           # Build the Go application
@@ -62,73 +64,33 @@ jobs:
           # does not rely on C libraries. If it does, you might need a more complex setup
           # or a dedicated cross-compiler toolchain for C.
           echo "Building for $GOOS/$GOARCH..."
-          CGO_ENABLED=0 go build -o "$BINARY_NAME" ./main.go
+          CGO_ENABLED=0 go build -o "$EXECUTABLE_NAME" ./main.go
 
           # Verify the built binary (list its size and permissions)
-          echo "Built binary details:"
-          ls -lh "$BINARY_NAME"
+          echo "Built executable details:"
+          ls -lh "$EXECUTABLE_NAME"
+
+          # Define the archive name based on OS and architecture
+          ARCHIVE_NAME="${BASE_BINARY_NAME}-${{ matrix.os }}-${{ matrix.arch }}"
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            ARCHIVE_NAME="${ARCHIVE_NAME}.zip"
+            # Create a zip archive for Windows
+            zip -r "$ARCHIVE_NAME" "$EXECUTABLE_NAME"
+          else
+            ARCHIVE_NAME="${ARCHIVE_NAME}.tar.gz"
+            # Create a tar.gz archive for Linux and macOS
+            tar -czvf "$ARCHIVE_NAME" "$EXECUTABLE_NAME"
+          fi
+
+          # Verify the built archive
+          echo "Built archive details:"
+          ls -lh "$ARCHIVE_NAME"
 
       - name: Upload compiled binary as artifact
         uses: actions/upload-artifact@v4 # Action to upload build artifacts
         with:
           # The name of the artifact will include the OS and architecture
-          name: my-app-${{ matrix.os }}-${{ matrix.arch }}
-          # The path to the binary. Use a wildcard for the .exe extension on Windows.
-          path: my-app-${{ matrix.os }}-${{ matrix.arch }}*
-
-  # Job to create a GitHub Release and upload the compiled binaries as assets
-  release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest # Use an Ubuntu runner
-    needs: build # This job depends on the 'build' job completing successfully
-    # This job will only run when a new GitHub Release is published
-    if: github.event_name == 'release' && github.event.action == 'published'
-
-    steps:
-      - name: Download all build artifacts
-        uses: actions/download-artifact@v4 # Action to download artifacts from previous jobs
-        with:
-          path: artifacts # Download all artifacts into an 'artifacts' directory
-
-      - name: List downloaded artifacts (for debugging purposes)
-        run: ls -R artifacts
-
-      - name: Create GitHub Release
-        id: create_release # Assign an ID to this step to reference its outputs
-        uses: actions/create-release@v1 # Action to create a new GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GITHUB_TOKEN is automatically provided by GitHub Actions
-        with:
-          tag_name: ${{ github.ref }} # Use the Git tag that triggered the release
-          release_name: Release ${{ github.ref }} # Name of the release
-          draft: false # Set to true if you want to create a draft release first
-          prerelease: false # Set to true if this is a pre-release
-
-      - name: Upload Release Assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GITHUB_TOKEN for authentication
-        run: |
-          # Iterate over each downloaded artifact directory (e.g., artifacts/my-app-linux-amd64/, artifacts/my-app-windows-amd64/)
-          for dir in artifacts/*/; do
-            # Find the actual binary file within each directory
-            # The find command ensures we get the correct path, including the .exe extension for Windows
-            BINARY_PATH=$(find "$dir" -type f -name "my-app-*")
-
-            # Check if a binary file was found
-            if [ -f "$BINARY_PATH" ]; then
-              # Extract just the filename (e.g., my-app-linux-amd64 or my-app-windows-amd64.exe)
-              BINARY_FILENAME=$(basename "$BINARY_PATH")
-
-              echo "Uploading asset: $BINARY_FILENAME from $BINARY_PATH"
-
-              # Use curl to upload the binary as a release asset
-              # The upload_url comes from the output of the 'create_release' step
-              curl -X POST \
-                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                -H "Content-Type: application/octet-stream" \
-                --data-binary "@$BINARY_PATH" \
-                "${{ steps.create_release.outputs.upload_url }}?name=$BINARY_FILENAME"
-            else
-              echo "Warning: No binary found in $dir. Skipping upload for this artifact."
-            fi
-          done
+          # Changed from "my-app" to "yochat"
+          name: yochat-${{ matrix.os }}-${{ matrix.arch }}
+          # The path to the archive. Use a wildcard to match the .zip or .tar.gz extension.
+          path: yochat-${{ matrix.os }}-${{ matrix.arch }}*

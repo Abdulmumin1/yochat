@@ -8,10 +8,12 @@ import (
 	"mime"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 	"youchat/chat/config"
 
+	"github.com/atotto/clipboard"
 	"github.com/briandowns/spinner"
 	"google.golang.org/genai"
 )
@@ -45,6 +47,7 @@ func main() {
 	var userQuestionText string
 
 	if *filePath != "" {
+
 		fileBytes, err := os.ReadFile(*filePath)
 		if err != nil {
 			log.Fatalf("Error reading file %s: %v", *filePath, err)
@@ -56,7 +59,10 @@ func main() {
 			mimeType = "text/plain"
 		}
 
-		fmt.Printf("Analyzing file: %s (MIME type: %s)\n", *filePath, mimeType)
+		s := spinner.New(spinner.CharSets[28], 100*time.Millisecond)
+		suffix := fmt.Sprintf("Analyzing file: %s (MIME type: %s)\n", *filePath, mimeType)
+		s.Start()
+		s.Suffix = suffix
 
 		// Check if the current MIME type is in our allowedBlobMIMETypes map
 		if allowedBlobMIMETypes[mimeType] {
@@ -82,6 +88,8 @@ func main() {
 		} else {
 			userQuestionText = "What is in this file?"
 		}
+
+		s.Stop()
 
 	} else if *directQuestion != "" {
 		userQuestionText = *directQuestion
@@ -191,7 +199,7 @@ func handleAskCommand(contents []*genai.Content) {
 	modelName := "gemini-2.5-flash-lite-preview-06-17"
 
 	config := &genai.GenerateContentConfig{
-		SystemInstruction: genai.NewContentFromText("You are an assistant in the terminal that provides direct answers to users' questions without any further context or filler text. You are to generate short and precise answers to users' questions. Aim for less than 100 words. Also, remember you're in the terminal, so avoid markdown or similar formatting. If no specific context is provided, assume it's a question relating to something in the command line. Also note that you're a one-way chat, meaning the user cannot provide additional context after your first reply. When you're given a file though, be consice with your reply, but not soo that you are not given any meaning to the user. Also the user might request a specific thing for thier output, give it to them as requested. you're also a bit of savage when the user is not requesting serious and it just casual conversation 😂", genai.RoleUser),
+		SystemInstruction: genai.NewContentFromText("You are an assistant in the terminal that provides direct answers to users' questions without any further context or filler text. You are to generate short and precise answers to users' questions. Aim for less than 100 words. Also, remember you're in the terminal, so avoid markdown or similar formatting. If no specific context is provided, assume it's a question relating to something in the command line. wrap any terminal command in <command></command> Also note that you're a one-way chat, meaning the user cannot provide additional context after your first reply. When you're given a file though, be consice with your reply, but not soo that you are not given any meaning to the user. Also the user might request a specific thing for thier output, give it to them as requested. you're also a bit of savage when the user is not requesting serious and it just casual conversation 😂", genai.RoleUser),
 	}
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
@@ -207,15 +215,46 @@ func handleAskCommand(contents []*genai.Content) {
 	s.Start()
 
 	answer := ""
-	for chunk, _ := range stream {
-		if len(chunk.Candidates) > 0 {
-			part := chunk.Candidates[0].Content.Parts[0]
-			answer += part.Text
+	outputString := answer
 
-			s.Suffix = answer
+	for chunk, err := range stream {
+		if err != nil {
+			fmt.Printf("%v", err)
+			break
 		}
 
+		if len(chunk.Candidates) > 0 {
+			candidate := chunk.Candidates[0]
+
+			if candidate.Content != nil && len(candidate.Content.Parts) > 0 {
+				part := candidate.Content.Parts[0]
+				answer += part.Text
+				outputString = strings.ReplaceAll(answer, "<command>", "")
+				outputString = strings.ReplaceAll(outputString, "</command>", "")
+				s.Suffix = outputString
+			}
+		}
 	}
 	s.Stop()
-	fmt.Println(answer)
+	fmt.Println(outputString)
+	re := regexp.MustCompile(`<command>(.*?)</command>`)
+	matches := re.FindAllStringSubmatch(answer, -1)
+	if len(matches) > 0 {
+		var commandsToCopy []string
+		for _, match := range matches {
+			if len(match) > 1 {
+				command := match[1]
+				commandsToCopy = append(commandsToCopy, command)
+			}
+		}
+
+		clipboardContent := strings.Join(commandsToCopy, "\n")
+		err := clipboard.WriteAll(clipboardContent)
+		if err != nil {
+			fmt.Printf("Error copying to clipboard: %v\n", err)
+		} else {
+			fmt.Println("\nExtracted commands copied to clipboard!")
+		}
+	}
+
 }
