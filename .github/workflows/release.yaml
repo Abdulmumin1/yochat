@@ -1,6 +1,6 @@
 # .github/workflows/go-cross-compile.yml
 
-name: Go Cross-Compile and Release
+name: Go Cross-Compile
 
 # This workflow will run on:
 # 1. Every push to the 'main' branch (useful for testing builds)
@@ -8,7 +8,7 @@ name: Go Cross-Compile and Release
 on:
   push:
     branches:
-      - main # Or 'master', depending on your default branch name
+      - master # Or 'master', depending on your default branch name
   release:
     types: [published]
 
