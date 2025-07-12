@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - master # Or 'master', depending on your default branch name
+
 jobs:
   # Job to build the Go application for various platforms
   build:
@@ -26,11 +27,9 @@ jobs:
           # If your app needs this, you might need a more specialized build step.
           - os: windows
             arch: arm64
-          # Removed exclusions for 386 builds, as they are now explicitly included
-          # - os: linux
-          #   arch: 386
-          # - os: darwin
-          #   arch: 386
+          # Exclude darwin/386 as it is an unsupported GOOS/GOARCH pair
+          - os: darwin
+            arch: 386
 
     steps:
       - name: Checkout code
