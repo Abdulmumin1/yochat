@@ -90,12 +90,18 @@ Once you've downloaded the correct archive, you need to extract its contents.
 
 1. Open your **Terminal** application.
 2. Navigate to the directory where you downloaded the .tar.gz file using the cd command. For example, if it's in your Downloads folder:
-   cd \~/Downloads
 
-3. Extract the archive using the tar command. Replace your-downloaded-file.tar.gz with the actual filename:
-   tar \-xzvf your-downloaded-file.tar.gz
+```bash
+cd ~/Downloads
+  ```
 
-   This will extract the yochat executable file into the current directory.
+3. Extract the archive using the tar command. Replace your-downloaded-file.zip with the actual filename:
+
+```bash
+unzip your-downloaded-file.zip
+```
+
+This will extract the yochat executable file into the current directory.
 
 ## **3\. Make yochat Globally Accessible (Recommended)**
 
@@ -106,17 +112,26 @@ To run yochat by simply typing yochat in any terminal, you need to place its exe
 The easiest way to make yochat globally accessible is to move it to /usr/local/bin, which is typically included in your system's PATH.
 
 1. Open your **Terminal** application.
-2. Navigate to the directory where you extracted the yochat executable (e.g., \~/Downloads).
+2. Navigate to the directory where you extracted the yochat executable (e.g., `~/Downloads`).
 3. **Grant execute permissions** to the file (if you haven't already):
-   chmod \+x yochat
 
-4. **Move the executable** to /usr/local/bin using sudo (administrator privileges are required for this location):
-   sudo mv yochat /usr/local/bin/
+```bash
+chmod \+x yochat
+```
+
+4. **Move the executable** to `/usr/local/bin` using `sudo` (administrator privileges are required for this location):
+
+```bash
+sudo mv yochat /usr/local/bin/
+```
 
 5. **Verify the installation** by opening a **new terminal window** and typing:
-   yochat
 
-   You should see the application's output.
+```bash
+yochat
+```
+
+You should see the application's output.
 
 ### **For Windows**
 
@@ -129,9 +144,14 @@ Making an application globally accessible on Windows typically involves adding i
    * Under "System variables", find the Path variable and select it, then click "Edit...".
    * Click "New" and add the full path to the directory where you placed yochat.exe (e.g., C:\\yochat).
    * Click "OK" on all open windows to save the changes.
-3. **Verify the installation** by opening a **new Command Prompt or PowerShell window** and typing:
-   yochat
 
-   You should see the application's output. (Note: Existing terminal windows might not reflect the PATH changes until restarted).
+3. **Verify the installation** by opening a **new Command Prompt or PowerShell window** and typing:
+
+
+```bash
+yochat
+```
+
+You should see the application's output. (Note: Existing terminal windows might not reflect the PATH changes until restarted).
 
 If you encounter any issues, please refer to the project's GitHub repository for more information or to open an issue.
