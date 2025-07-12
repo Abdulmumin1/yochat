@@ -8,7 +8,7 @@ name: Go Cross-Compile and Release
 on:
   push:
     branches:
-      - main # Or 'master', depending on your default branch name
+      - master
   release:
     types: [published]
 
