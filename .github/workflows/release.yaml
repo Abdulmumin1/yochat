@@ -8,8 +8,6 @@ on:
   push:
     branches:
       - master # Or 'master', depending on your default branch name
-  workflow_dispatch:
-
 jobs:
   # Job to build the Go application for various platforms
   build:
@@ -82,8 +80,13 @@ jobs:
             rm -rf temp_zip_contents # Clean up the temporary directory
           else
             ARCHIVE_NAME="${ARCHIVE_NAME}.tar.gz"
-            # Create a tar.gz archive for Linux and macOS
-            tar -czvf "$ARCHIVE_NAME" "$EXECUTABLE_NAME"
+            # Create a temporary directory for tar.gz to ensure a flat structure within the archive
+            mkdir -p temp_tar_contents
+            mv "$EXECUTABLE_NAME" temp_tar_contents/
+            # Change into the temp directory, create the tar.gz, then move back
+            # This ensures that when unzipped, the executable is at the root of the extracted content
+            (cd temp_tar_contents && tar -czvf "../$ARCHIVE_NAME" "$EXECUTABLE_NAME")
+            rm -rf temp_tar_contents # Clean up the temporary directory
           fi
 
           # Verify the built archive
