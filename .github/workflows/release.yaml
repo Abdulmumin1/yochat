@@ -1,101 +1,62 @@
-# .github/workflows/go-cross-compile.yml
-
 name: Go Cross-Compile
 
-# This workflow will run on:
-# 1. Every push to the 'main' branch (useful for testing builds)
 on:
   push:
     branches:
-      - master # Or 'master', depending on your default branch name
+      - master
 
 jobs:
-  # Job to build the Go application for various platforms
   build:
     name: Build ${{ matrix.os }}/${{ matrix.arch }}
-    runs-on: ubuntu-latest # Use an Ubuntu runner for consistent build environment
+    runs-on: ubuntu-latest
 
     strategy:
-      # Define a matrix of operating systems and architectures to build for
       matrix:
         os: [linux, windows, darwin]
-        # Added '386' to the architectures list to include 32-bit builds
         arch: [amd64, arm64, 386]
-        # Exclude unsupported or less common combinations to speed up builds
         exclude:
-          # Windows ARM64 cross-compilation can be more complex, often requiring specific SDKs or CGO considerations.
-          # If your app needs this, you might need a more specialized build step.
           - os: windows
             arch: arm64
-          # Exclude darwin/386 as it is an unsupported GOOS/GOARCH pair
           - os: darwin
             arch: 386
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # Action to check out your repository code
+        uses: actions/checkout@v4
 
       - name: Set up Go environment
-        uses: actions/setup-go@v5 # Action to set up the Go toolchain
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.22" # Specify the Go version you want to use (e.g., '1.22' or 'stable')
+          go-version: "1.22"
 
       - name: Build Go application
         run: |
           # Set environment variables for cross-compilation
-          export GOOS=${{ matrix.os }}    # Target Operating System
-          export GOARCH=${{ matrix.arch }} # Target Architecture
+          export GOOS=${{ matrix.os }}
+          export GOARCH=${{ matrix.arch }}
 
-          # Define the base name for the binary
-          BASE_BINARY_NAME="yochat"
+          # Define the output directory and create it
+          OUTPUT_DIR="yochat"
+          mkdir -p "$OUTPUT_DIR"
 
-          # Define the output filename for the executable itself
-          EXECUTABLE_NAME="${BASE_BINARY_NAME}"
+          # Define the output filename for the executable
+          EXECUTABLE_NAME="yochat"
           if [ "${{ matrix.os }}" = "windows" ]; then
             EXECUTABLE_NAME="${EXECUTABLE_NAME}.exe"
           fi
 
-          # Build the Go application
-          # CGO_ENABLED=0 disables CGO, which simplifies cross-compilation if your Go app
-          # does not rely on C libraries. If it does, you might need a more complex setup
-          # or a dedicated cross-compiler toolchain for C.
+          # Build the Go application into the new directory
           echo "Building for $GOOS/$GOARCH..."
-          CGO_ENABLED=0 go build -o "$EXECUTABLE_NAME" ./main.go
+          CGO_ENABLED=0 go build -o "${OUTPUT_DIR}/${EXECUTABLE_NAME}" ./main.go
 
-          # Verify the built binary (list its size and permissions)
+          # Verify the built binary
           echo "Built executable details:"
-          ls -lh "$EXECUTABLE_NAME"
-
-          # Define the archive name based on OS and architecture
-          ARCHIVE_NAME="${BASE_BINARY_NAME}-${{ matrix.os }}-${{ matrix.arch }}"
-          if [ "${{ matrix.os }}" = "windows" ]; then
-            ARCHIVE_NAME="${ARCHIVE_NAME}.zip"
-            # Create a temporary directory for zipping to ensure a flat structure within the zip
-            mkdir -p temp_zip_contents
-            mv "$EXECUTABLE_NAME" temp_zip_contents/
-            # Change into the temp directory, create the zip, then move back
-            # This ensures that when unzipped, the executable is at the root of the extracted content
-            (cd temp_zip_contents && zip -r "../$ARCHIVE_NAME" "$EXECUTABLE_NAME")
-            rm -rf temp_zip_contents # Clean up the temporary directory
-          else
-            ARCHIVE_NAME="${ARCHIVE_NAME}.tar.gz"
-            # Create a temporary directory for tar.gz to ensure a flat structure within the archive
-            mkdir -p temp_tar_contents
-            mv "$EXECUTABLE_NAME" temp_tar_contents/
-            # Change into the temp directory, create the tar.gz, then move back
-            # This ensures that when unzipped, the executable is at the root of the extracted content
-            (cd temp_tar_contents && tar -czvf "../$ARCHIVE_NAME" "$EXECUTABLE_NAME")
-            rm -rf temp_tar_contents # Clean up the temporary directory
-          fi
-
-          # Verify the built archive
-          echo "Built archive details:"
-          ls -lh "$ARCHIVE_NAME"
+          ls -lh "${OUTPUT_DIR}/${EXECUTABLE_NAME}"
 
       - name: Upload compiled binary as artifact
-        uses: actions/upload-artifact@v4 # Action to upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          # The name of the artifact will include the OS and architecture
+          # The name of the artifact (e.g., yochat-linux-amd64)
           name: yochat-${{ matrix.os }}-${{ matrix.arch }}
-          # The path to the archive. Use a wildcard to match the .zip or .tar.gz extension.
-          path: yochat-${{ matrix.os }}-${{ matrix.arch }}*
+          # Path to the directory to upload. This will create a 'yochat' folder in the artifact.
+          path: yochat
