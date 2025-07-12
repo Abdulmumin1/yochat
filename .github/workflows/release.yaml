@@ -8,8 +8,7 @@ on:
   push:
     branches:
       - master # Or 'master', depending on your default branch name
-  release:
-    types: [published]
+  workflow_dispatch:
 
 jobs:
   # Job to build the Go application for various platforms

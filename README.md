@@ -7,7 +7,7 @@ YoChat is a super duper fast command-line chat tool that leverages the Gemini 2.
 
 > fun tip: add alias for 'yochat' as "chat" 😅
 
-so you be like: chat "how do i compress an video file"
+so you be like: chat "how do i compress a video file"
 
 ### Setting Your API Key
 
