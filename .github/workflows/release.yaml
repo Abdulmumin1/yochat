@@ -7,6 +7,10 @@ on:
     tags:
       - "v*.*" # Changed to match your 'v0.0' tag format (e.g., v1.0, v2.5)
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build:
     name: Build ${{ matrix.os }}/${{ matrix.arch }}
