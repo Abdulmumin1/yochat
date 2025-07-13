@@ -88,3 +88,60 @@ jobs:
           name: ${{ steps.build_app.outputs.artifact_name }}
 
           path: ${{ steps.build_app.outputs.executable_name }}
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    # This job depends on the 'build' job. It will only run after all matrix builds are complete.
+    needs: build
+    # Only run this job if all preceding jobs (the 'build' jobs) succeeded.
+    if: success()
+
+    steps:
+      - name: Checkout code
+        # Checks out the repository code.
+        # fetch-depth: 0 is important to fetch all tags, which is needed for the release action.
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all build artifacts
+        # Downloads all artifacts that were uploaded by the 'build' job.
+        # All artifacts will be downloaded into the './artifacts' directory,
+        # with each artifact in its own subdirectory (e.g., ./artifacts/yochat-linux-x64/yochat).
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Create Release and Upload Assets
+        # This action creates a new GitHub Release and uploads the downloaded artifacts as assets.
+        uses: softprops/action-gh-release@v1
+        with:
+          # The tag_name is automatically derived from the Git tag that triggered the workflow.
+          tag_name: ${{ github.ref_name }}
+          # The name of the release.
+          name: Release ${{ github.ref_name }}
+          # The body of the release notes. You can customize this with more details.
+          body: |
+            ## Release Notes for ${{ github.ref_name }}
+
+            This release includes cross-compiled binaries for various platforms.
+
+            ### Assets:
+            - `yochat-linux-arm64`
+            - `yochat-linux-x64`
+            - `yochat-darwin-x64`
+            - `yochat-darwin-arm64`
+            - `yochat-windows-x64.exe`
+
+            Thank you for using yochat!
+          draft: false # Set to true if you want to create a draft release first.
+          prerelease: false # Set to true if this is a pre-release.
+          # Specifies the files to upload as release assets.
+          # The pattern './artifacts/*/*' will pick up all files within the subdirectories
+          # created by the 'download-artifact' action (e.g., ./artifacts/yochat-linux-x64/yochat).
+          files: ./artifacts/*/*
+        env:
+          # GITHUB_TOKEN is a special token provided by GitHub Actions with permissions
+          # to create releases and upload assets to the repository.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
