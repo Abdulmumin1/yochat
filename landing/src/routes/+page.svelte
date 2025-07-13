@@ -1,7 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
 
-	// Define the general description and features, to be used in one of the outputs
 	const generalDescription =
 		'A simple CLI tool to chat with Gemini 2.5 Flash Lite, supporting text and multimodal file analysis directly from your terminal.';
 	const generalFeatures = [
@@ -12,7 +11,6 @@
 		'Seamless integration with your terminal workflow'
 	];
 
-	// Function to format the general help output
 	function getHelpOutput() {
 		let output = '';
 		output += `--- YoChat: Your Most Reachable LLM Interface ---\n\n`;
@@ -25,7 +23,6 @@
 		return output;
 	}
 
-	// Array of commands with their respective simulated outputs
 	const commandData = [
 		{
 			command: 'chat help',
@@ -60,18 +57,17 @@
 
 	let currentCommand = '';
 	let currentOutputText = '';
-	let commandIndex = 0; // Index of the character being typed for the current command
-	let currentCommandDataIndex = 0; // Index of the command in the commandData array
+	let commandIndex = 0;
+	let currentCommandDataIndex = 0;
 	let typingDone = false;
 	let showingOutput = false;
 
-	const TYPING_SPEED = 50; // milliseconds per character
-	const PAUSE_BEFORE_OUTPUT = 1000; // milliseconds before output appears
-	const OUTPUT_DISPLAY_TIME = 3500; // milliseconds output is displayed
-	const PAUSE_BEFORE_NEXT_COMMAND = 500; // milliseconds before next command starts typing
+	const TYPING_SPEED = 50;
+	const PAUSE_BEFORE_OUTPUT = 1000;
+	const OUTPUT_DISPLAY_TIME = 3500;
+	const PAUSE_BEFORE_NEXT_COMMAND = 500;
 
 	async function typeAndDisplayCycle() {
-		// Reset for the new command cycle
 		typingDone = false;
 		showingOutput = false;
 		currentCommand = '';
@@ -82,29 +78,23 @@
 		const commandToType = currentData.command;
 		const outputToDisplay = currentData.output;
 
-		// 1. Type the command
 		while (commandIndex < commandToType.length) {
 			currentCommand += commandToType.charAt(commandIndex);
 			commandIndex++;
 			await new Promise((resolve) => setTimeout(resolve, TYPING_SPEED));
 		}
-		typingDone = true; // Stop cursor blinking
+		typingDone = true;
 
-		// 2. Pause before showing output
 		await new Promise((resolve) => setTimeout(resolve, PAUSE_BEFORE_OUTPUT));
 		showingOutput = true;
 		currentOutputText = outputToDisplay;
 
-		// 3. Display output for a duration
 		await new Promise((resolve) => setTimeout(resolve, OUTPUT_DISPLAY_TIME));
 
-		// 4. Increment to the next command in the array, looping if at the end
 		currentCommandDataIndex = (currentCommandDataIndex + 1) % commandData.length;
 
-		// 5. Pause before starting the next command (effectively clearing the screen for the user)
 		await new Promise((resolve) => setTimeout(resolve, PAUSE_BEFORE_NEXT_COMMAND));
 
-		// 6. Start the cycle again for the next command
 		typeAndDisplayCycle();
 	}
 
@@ -114,12 +104,12 @@
 	}
 
 	onMount(() => {
-		typeAndDisplayCycle(); // Start the command typing and display loop
+		typeAndDisplayCycle();
 	});
 </script>
 
 <svelte:head>
-	<title>YouChat CLI Tool</title>
+	<title>YoChat CLI Tool</title>
 </svelte:head>
 
 <main class="flex flex-col">
