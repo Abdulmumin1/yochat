@@ -5,7 +5,7 @@ on:
   # For example, pushing a tag like 'v1.0', 'v2.5', etc., will start this workflow.
   push:
     tags:
-      - "v*.*" # Changed to match your 'v0.0' tag format (e.g., v1.0, v2.5)
+      - "v*.*"
 
 permissions:
   contents: write
