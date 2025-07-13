@@ -2,6 +2,8 @@ name: Go Cross-Compile
 
 on:
   push:
+    tags:
+      - "*"
     branches:
       - master
 
