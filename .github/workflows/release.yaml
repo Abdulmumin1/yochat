@@ -5,7 +5,7 @@ on:
   # For example, pushing a tag like 'v1.0', 'v2.5', etc., will start this workflow.
   push:
     tags:
-      - "v*.*"
+      - "v*.*" # Changed to match your 'v0.0' tag format (e.g., v1.0, v2.5)
 
 jobs:
   build:
@@ -97,6 +97,34 @@ jobs:
         with:
           path: ./artifacts
 
+      - name: Zip compiled binaries for release assets
+        # This step creates .zip archives for each compiled binary.
+        # This is necessary because the gh release create command expects actual files,
+        # and zipping them provides a clean, cross-platform asset.
+        run: |
+          APP_NAME="yochat"
+          cd ./artifacts # Change to the directory where artifacts were downloaded
+
+          # Loop through each subdirectory (e.g., yochat-linux-arm64)
+          for dir in */; do
+            DIR_NAME="${dir%/}" # Remove trailing slash
+            # Find the executable within the subdirectory (yochat or yochat.exe)
+            EXECUTABLE_PATH=$(find "${DIR_NAME}" -maxdepth 1 -type f -print -quit)
+
+            if [ -n "${EXECUTABLE_PATH}" ]; then
+              # Define the name for the zip file (e.g., yochat-linux-arm64.zip)
+              ZIP_FILE_NAME="${DIR_NAME}.zip"
+              echo "Zipping ${EXECUTABLE_PATH} into ${ZIP_FILE_NAME}"
+              # Create the zip file, ensuring only the executable is at the root of the zip
+              # -j: junk paths (do not store directory names inside the zip)
+              zip -j "${ZIP_FILE_NAME}" "${EXECUTABLE_PATH}"
+            else
+              echo "Warning: No executable found in ${DIR_NAME}"
+            fi
+          done
+          echo "Created zip files:"
+          ls -lh *.zip # List the generated zip files
+
       - name: Create Release and Upload Assets using gh CLI
         # The GitHub CLI (gh) is pre-installed on GitHub-hosted runners.
         # We set the GH_TOKEN environment variable for authentication.
@@ -111,24 +139,23 @@ jobs:
             This release includes cross-compiled binaries for various platforms.
 
             ### Assets:
-            - `yochat-linux-arm64`
-            - `yochat-linux-x64`
-            - `yochat-darwin-x64`
-            - `yochat-darwin-arm64`
-            - `yochat-windows-x64.exe`
+            - `yochat-linux-arm64.zip`
+            - `yochat-linux-x64.zip`
+            - `yochat-darwin-x64.zip`
+            - `yochat-darwin-arm64.zip`
+            - `yochat-windows-x64.zip`
 
             Thank you for using yochat!
           EOF
           )
 
           # Create the release using gh CLI
-          # --notes-file - creates a temporary file for the release notes
-          # ./artifacts/*/* provides a glob pattern to upload all files in the subdirectories
+          # The ./artifacts/*.zip glob pattern will now correctly pick up the created zip files.
           gh release create "${TAG_NAME}" \
             --title "${RELEASE_TITLE}" \
             --notes "${RELEASE_BODY}" \
             --draft=false \
             --prerelease=false \
-            ./artifacts/*/*
+            ./artifacts/*.zip # This will now upload the .zip files
 
           echo "GitHub Release created successfully for tag: ${TAG_NAME}"
