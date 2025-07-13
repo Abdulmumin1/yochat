@@ -12,13 +12,20 @@ jobs:
 
     strategy:
       matrix:
-        os: [linux, windows, darwin]
-        arch: [amd64, arm64, 386]
-        exclude:
-          - os: windows
+        os: [linux, darwin, windows]
+        arch: [arm64, x64]
+
+        include:
+          - os: linux
             arch: arm64
+          - os: linux
+            arch: x64
           - os: darwin
-            arch: 386
+            arch: x64
+          - os: darwin
+            arch: arm64
+          - os: windows
+            arch: x64
 
     steps:
       - name: Checkout code
@@ -30,33 +37,54 @@ jobs:
           go-version: "1.22"
 
       - name: Build Go application
+        id: build_app
         run: |
-          # Set environment variables for cross-compilation
+          APP_NAME="yochat"
+
+
           export GOOS=${{ matrix.os }}
-          export GOARCH=${{ matrix.arch }}
 
-          # Define the output directory and create it
-          OUTPUT_DIR="yochat"
-          mkdir -p "$OUTPUT_DIR"
 
-          # Define the output filename for the executable
-          EXECUTABLE_NAME="yochat"
+          GO_ARCH_FOR_COMPILER=""
+          if [ "${{ matrix.arch }}" = "x64" ]; then
+            GO_ARCH_FOR_COMPILER="amd64"
+          elif [ "${{ matrix.arch }}" = "arm64" ]; then
+            GO_ARCH_FOR_COMPILER="arm64"
+          else
+            echo "Error: Unknown architecture for Go compiler: ${{ matrix.arch }}"
+            exit 1
+          fi
+          export GOARCH="$GO_ARCH_FOR_COMPILER"
+
+          echo "Building for $GOOS/$GOARCH..."
+
+          EXECUTABLE_NAME="${APP_NAME}"
           if [ "${{ matrix.os }}" = "windows" ]; then
             EXECUTABLE_NAME="${EXECUTABLE_NAME}.exe"
           fi
 
-          # Build the Go application into the new directory
-          echo "Building for $GOOS/$GOARCH..."
-          CGO_ENABLED=0 go build -o "${OUTPUT_DIR}/${EXECUTABLE_NAME}" ./main.go
 
-          # Verify the built binary
+
+          CGO_ENABLED=0 go build -o "${EXECUTABLE_NAME}" ./main.go
+
+
           echo "Built executable details:"
-          ls -lh "${OUTPUT_DIR}/${EXECUTABLE_NAME}"
+          ls -lh "${EXECUTABLE_NAME}"
+
+
+
+          ARTIFACT_ARCH="${{ matrix.arch }}"
+
+
+          ARTIFACT_NAME="${APP_NAME}-${{ matrix.os }}-${ARTIFACT_ARCH}"
+
+
+          echo "executable_name=$EXECUTABLE_NAME" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Upload compiled binary as artifact
         uses: actions/upload-artifact@v4
         with:
-          # The name of the artifact (e.g., yochat-linux-amd64)
-          name: yochat-${{ matrix.os }}-${{ matrix.arch }}
-          # Path to the directory to upload. This will create a 'yochat' folder in the artifact.
-          path: yochat
+          name: ${{ steps.build_app.outputs.artifact_name }}
+
+          path: ${{ steps.build_app.outputs.executable_name }}
