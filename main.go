@@ -36,15 +36,23 @@ var allowedBlobMIMETypes = map[string]bool{
 	"video/flv":       true,
 }
 
+const VERSION = "0.1"
+
 func main() {
 	// Define flags for file input and direct question
 	filePath := flag.String("file", "", "Path to a file (text, image, etc.) to analyze")
 	directQuestion := flag.String("q", "", "Direct question to ask")
+	userQuestionText := ""
 
 	flag.Parse()
 
+	s := spinner.New(spinner.CharSets[28], 100*time.Millisecond)
+	if *directQuestion == "" && len(os.Args) > 3 {
+		formQuestion := os.Args[3:]
+		userQuestionText = strings.Join(formQuestion, " ")
+	}
+
 	var userParts []*genai.Part
-	var userQuestionText string
 
 	if *filePath != "" {
 
@@ -55,11 +63,9 @@ func main() {
 
 		mimeType := mime.TypeByExtension(filepath.Ext(*filePath))
 		if mimeType == "" {
-			fmt.Printf("Warning: Could not determine MIME type for %s. Defaulting to text/plain.\n", *filePath)
 			mimeType = "text/plain"
 		}
 
-		s := spinner.New(spinner.CharSets[28], 100*time.Millisecond)
 		suffix := fmt.Sprintf("Analyzing file: %s (MIME type: %s)\n", *filePath, mimeType)
 		s.Start()
 		s.Suffix = suffix
@@ -85,11 +91,7 @@ func main() {
 
 		if *directQuestion != "" {
 			userQuestionText = *directQuestion
-		} else {
-			userQuestionText = "What is in this file?"
 		}
-
-		s.Stop()
 
 	} else if *directQuestion != "" {
 		userQuestionText = *directQuestion
@@ -118,15 +120,15 @@ func main() {
 		genai.NewContentFromParts(userParts, genai.RoleUser),
 	}
 
-	if len(flag.Args()) > 0 && flag.Args()[0] == "help" && *filePath == "" && *directQuestion == "" {
+	if len(os.Args) > 1 && os.Args[1] == "help" && *filePath == "" && *directQuestion == "" {
 		printHelp()
 		return
-	} else if flag.Args()[0] == "set" {
-		if len(flag.Args()) < 2 {
+	} else if os.Args[1] == "set" {
+		if len(os.Args) < 3 {
 			fmt.Println("Usage:")
 			fmt.Println("  set <your-api-key> - obtain one from https://aistudio.google.com (free)")
 		} else {
-			api_key := flag.Args()[1]
+			api_key := os.Args[2]
 			cfg, err := config.LoadConfig()
 			if err != nil {
 				fmt.Printf("Error loading config: %v\n", err)
@@ -150,32 +152,36 @@ func main() {
 			fmt.Printf("Config file location: %s\n", configFilePath)
 		}
 		return
+	} else if os.Args[1] == "version" {
+		fmt.Printf("v%s\n", VERSION)
+		return
+
 	}
 
-	handleAskCommand(contents)
+	handleAskCommand(contents, s)
 }
 
 func printHelp() {
 	fmt.Println("Usage:")
 	fmt.Println("  chat [options] <your_question>")
-	fmt.Println("  chat --file <path_to_file> [--q \"Your question about the file\"]")
+	fmt.Println("  chat --file <path_to_file> \"Your question about the file\"")
 	fmt.Println("")
 	fmt.Println("Options:")
 	fmt.Println("  --file <path>   Provides a file (text, image, etc.) for analysis. Required for multimodal input.")
-	fmt.Println("  -q <question>   Directly provides a question (alternative to just typing the question).")
-	fmt.Println("                  When used with --file, this question is asked *about* the file.")
+	fmt.Println("  -q <question>   Optional method to ask question (alternative to just typing the question).")
 	fmt.Println("")
 	fmt.Println("Available Commands:")
 	fmt.Println("  <your_question>   Asks a question to the Gemini 2.5 Flash Lite model.")
-	fmt.Println("                    Example: chat \"What is the capital of France?\"")
+	fmt.Println("                    Example: chat \"What is what?\"")
 	fmt.Println("  --file            Uploads a file to the model for analysis. Can be combined with a question.")
 	fmt.Println("                    Example: chat --file ./my_document.txt \"Summarize this document.\"")
 	fmt.Println("                    Example: chat --file ./image.jpg \"What is in this picture?\"")
 	fmt.Println("  help              Shows this help message.")
 	fmt.Println("  set <api-key>     Set your gemini api key. obtain one from https://aistudio.google.com (free)")
+	fmt.Println("  version           yochat version")
 }
 
-func handleAskCommand(contents []*genai.Content) {
+func handleAskCommand(contents []*genai.Content, anlySpinner *spinner.Spinner) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		fmt.Printf("Error loading API key: %v\n", err)
@@ -216,7 +222,7 @@ func handleAskCommand(contents []*genai.Content) {
 
 	answer := ""
 	outputString := answer
-
+	anlySpinner.Stop()
 	for chunk, err := range stream {
 		if err != nil {
 			fmt.Printf("%v", err)
