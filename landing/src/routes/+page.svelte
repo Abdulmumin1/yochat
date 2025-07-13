@@ -108,6 +108,11 @@
 		typeAndDisplayCycle();
 	}
 
+	const installCommand = 'curl -fsSL https://yochat.yaqeen.me/install | bash';
+	function copyToClipboard() {
+		navigator.clipboard.writeText(installCommand);
+	}
+
 	onMount(() => {
 		typeAndDisplayCycle(); // Start the command typing and display loop
 	});
@@ -117,47 +122,120 @@
 	<title>YouChat CLI Tool</title>
 </svelte:head>
 
-<div class="w-screen mx-auto flex flex-col items-center justify-center min-h-screen py-10">
-	<div class="mb-12 flex flex-col gap-4 text-center">
-		<h1 class="text-4xl font-bold text-white">YoChat</h1>
-		<p class="text-lg text-gray-300">your most reachable llm interface</p>
-	</div>
-	<div class="terminal-container bg-stone-800">
-		<div class="terminal-header">
-			<div class="dot red"></div>
-			<div class="dot yellow"></div>
-			<div class="dot green"></div>
-			<span class="title">yochat_cli - bash</span>
+<main class="flex flex-col">
+	<div
+		class="h-screen w-screen mx-auto flex flex-col items-center justify-center min-h-screen py-10"
+	>
+		<div class="mb-12 flex flex-col gap-4 text-center">
+			<h1 class="text-4xl font-bold text-white">YoChat</h1>
+			<p class="text-lg text-gray-300">your most reachable llm interface</p>
 		</div>
-		<pre class="terminal-body">
-<span class="prompt">user@yochat:~# </span><span class="command-text">{currentCommand}</span><span
-				class="cursor"
-				class:blinking={!typingDone}>|</span
-			>
+		<div class="terminal-container bg-stone-800">
+			<div class="terminal-header">
+				<div class="dot bg-pink-500"></div>
+				<div class="dot yellow"></div>
+				<div class="dot green"></div>
+				<span class="title">yochat_cli - bash</span>
+			</div>
+			<pre class="terminal-body">
+<span class="text-pink-400">user@yochat:~# </span><span class="command-text">{currentCommand}</span
+				><span class="cursor" class:blinking={!typingDone}>|</span>
 {#if showingOutput}<span class="output-text"
-					>{currentOutputText}
+						>{currentOutputText}
 </span>
-			{/if}
-    </pre>
+				{/if}
+        </pre>
+		</div>
+
+		<div
+			class="bg-stone-800 rounded-full divide-x-2 divide-stone-500 *:p-4 md:*p-8 grid grid-cols-2 mt-20"
+		>
+			<div class="flex items-center justify-center">
+				<a href="https://github.com/Abdulmumin1/yochat">github</a>
+			</div>
+			<div class="flex items-center justify-center">
+				<a href="#installation">installation</a>
+			</div>
+		</div>
 	</div>
 
-	<div class="bg-stone-800 rounded-full divide-x-2 divide-stone-500 *:p-8 grid grid-cols-2 mt-20">
-		<div class="flex items-center justify-center">
-			<a href="https://github.com/Abdulmumin1/yochat">github</a>
+	<div
+		id="installation  h-screen"
+		class="max-w-5xl mx-auto w-full flex gap-6 flex-col items-center"
+	>
+		<h1 class="text-3xl font-bold flex gap-2 items-center">
+			<div class="size-6 rounded bg-stone-800"></div>
+			Installation
+		</h1>
+		<div class="">
+			<div class="flex flex-col md:flex-row items-center gap-2">
+				<h4 class="text-xl font-bold">Linux and Mac</h4>
+				<div class=" bg-stone-800 rounded-full p-4 flex items-center justify-center gap-3">
+					{installCommand}
+					<button
+						class="cursor-pointer flex bg-stone-700 p-2 rounded-full"
+						onclick={copyToClipboard}
+					>
+						<span class="sr-only">copy</span>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="lucide lucide-copy-icon lucide-copy"
+							><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path
+								d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+							/></svg
+						></button
+					>
+				</div>
+			</div>
 		</div>
-		<div class="flex items-center justify-center">
-			<a href="">installation</a>
+
+		<div class="">
+			<div class="flex flex-col md:flex-row items-center gap-2">
+				<h4 class="text-xl font-bold">Windows or Manual installation</h4>
+				<div class=" bg-stone-800 rounded-full p-4 flex items-center justify-center gap-3">
+					Follow the instructions
+					<a
+						class="cursor-pointer flex bg-stone-700 p-2 rounded-full"
+						href="https://github.com/abdulmumin1/yochat#installation"
+					>
+						<span class="sr-only">copy</span>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="24"
+							height="24"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="lucide lucide-arrow-right-icon lucide-arrow-right"
+							><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg
+						></a
+					>
+				</div>
+			</div>
 		</div>
 	</div>
-</div>
+</main>
+
+<footer class="max-w-lg p-3 md:p-5 bg-stone-800 rounded-t-full mt-60 mx-auto text-sm text-center">
+	Built for fun, by abdulmumin x <a href="https://thirdpen.app">thirdpen.app</a>
+</footer>
 
 <style>
 	/* Your existing CSS styles go here */
 	:global(body) {
 		background-color: #1a1a1a;
-		display: flex;
-		justify-content: center;
-		align-items: center;
+
 		margin: 0;
 		font-family: 'Hack', 'Fira Code', 'Roboto Mono', monospace;
 		color: #e0e0e0;
@@ -211,10 +289,6 @@
 		overflow-y: auto;
 		font-size: 1em;
 		line-height: 1.5;
-	}
-
-	.prompt {
-		color: #7aff2e; /* Green for prompt */
 	}
 
 	.command-text {
