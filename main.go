@@ -36,7 +36,7 @@ var allowedBlobMIMETypes = map[string]bool{
 	"video/flv":       true,
 }
 
-const VERSION = "0.1"
+const VERSION = "0.4"
 
 func main() {
 	// Define flags for file input and direct question
