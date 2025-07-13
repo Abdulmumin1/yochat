@@ -1,8 +1,8 @@
 name: Go Cross-Compile and Release
 
 on:
-  # This workflow is now ONLY triggered when a new tag matching 'v*.*.*' is pushed.
-  # This ensures that the 'release' job runs only for actual version tags.
+  # This workflow is ONLY triggered when a new tag matching 'v*.*' is pushed.
+  # For example, pushing a tag like 'v1.0', 'v2.5', etc., will start this workflow.
   push:
     tags:
       - "v*.*"
@@ -90,20 +90,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Important for gh cli to access full git history and tags
 
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
 
-      - name: Create Release and Upload Assets
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }} # This will now correctly be the tag name (e.g., v1.0.0)
-          name: Release ${{ github.ref_name }}
-          body: |
-            ## Release Notes for ${{ github.ref_name }}
+      - name: Create Release and Upload Assets using gh CLI
+        # The GitHub CLI (gh) is pre-installed on GitHub-hosted runners.
+        # We set the GH_TOKEN environment variable for authentication.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          RELEASE_TITLE="Release ${TAG_NAME}"
+          RELEASE_BODY=$(cat <<EOF
+            ## Release Notes for ${TAG_NAME}
 
             This release includes cross-compiled binaries for various platforms.
 
@@ -115,8 +118,17 @@ jobs:
             - `yochat-windows-x64.exe`
 
             Thank you for using yochat!
-          draft: false
-          prerelease: false
-          files: ./artifacts/*/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EOF
+          )
+
+          # Create the release using gh CLI
+          # --notes-file - creates a temporary file for the release notes
+          # ./artifacts/*/* provides a glob pattern to upload all files in the subdirectories
+          gh release create "${TAG_NAME}" \
+            --title "${RELEASE_TITLE}" \
+            --notes "${RELEASE_BODY}" \
+            --draft=false \
+            --prerelease=false \
+            ./artifacts/*/*
+
+          echo "GitHub Release created successfully for tag: ${TAG_NAME}"
