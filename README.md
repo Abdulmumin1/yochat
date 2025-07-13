@@ -66,14 +66,14 @@ Our application is built using Go, which allows us to provide a single executabl
 
 The compiled application binaries are available on our GitHub Releases page.
 
-1. Go to the [Releases page of this repository](https://www.google.com/search?q=https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME/releases) (replace YOUR\_USERNAME and YOUR\_REPOSITORY\_NAME with your actual GitHub details).
-2. Find the latest release (e.g., v1.0.0).
+1. Go to the [Releases page of this repository](https://www.google.com/search?q=https://github.com/abdulmumin1/yochat/releases)
+2. Find the latest release (e.g., v1.0).
 3. Under the "Assets" section, download the archive file that matches your operating system and CPU architecture.
-   * **For Windows (64-bit Intel/AMD):** Look for yochat-windows-amd64.zip
-   * **For macOS (Intel-based):** Look for yochat-darwin-amd64.tar.gz
-   * **For macOS (Apple Silicon \- M1/M2/M3 chips):** Look for yochat-darwin-arm64.tar.gz
-   * **For Linux (64-bit Intel/AMD):** Look for yochat-linux-amd64.tar.gz
-   * **For Linux (64-bit ARM):** Look for yochat-linux-arm64.tar.gz
+   * **For Windows (64-bit Intel/x86):** Look for yochat-windows-x86.zip
+   * **For macOS (Intel-based):** Look for yochat-darwin-x86.zip
+   * **For macOS (Apple Silicon \- M1/M2/M3 chips):** Look for yochat-darwin-arm64.zip
+   * **For Linux (64-bit Intel/AMD):** Look for yochat-linux-x86.zip
+   * **For Linux (64-bit ARM):** Look for yochat-linux-arm64.zip
 
 ## **2\. Extract the Application**
 
@@ -82,14 +82,38 @@ Once you've downloaded the correct archive, you need to extract its contents.
 ### **For Windows (.zip file)**
 
 1. Locate the downloaded .zip file (e.g., yochat-windows-amd64.zip).
-2. **Right-click** on the .zip file.
-3. Select "Extract All..." (or similar option if you use a third-party archiving tool like 7-Zip or WinRAR).
-4. Choose a destination folder where you want to keep the application. A good practice is to create a dedicated folder like C:\\Program Files\\yochat or C:\\yochat.
+2. Extract the zip file.
+4. Choose a destination folder where you want to keep the application. A good practice is to create a dedicated folder like `C:\Program Files\yochat` or `C:\yochat`
 
-### **For macOS and Linux (.tar.gz file)**
+Making an application globally accessible on Windows typically involves adding its directory to the system's Path environment variable.
+
+1. **Move the extracted yochat.exe** to a permanent location, for example, C:\\yochat.
+2. **Add the directory to your System PATH:**
+
+   * Search for "Environment Variables" in the Windows search bar and select "Edit the system environment variables".
+   * Create a "New" env variable and add the full path to the directory where you placed yochat.exe (e.g., C:\\yochat).
+
+3. **Verify the installation** by opening a **new Command Prompt or PowerShell window** and typing:
+
+
+```bash
+> yochat
+```
+
+You should see the application's output. (Note: Existing terminal windows might not reflect the PATH changes until restarted).
+
+### **For macOS and Linux**
+
+#### Auto insall with:
+
+```bash
+curl -fsSL https://yochat.yaqeen.me/install | bash
+```
+
+#### Manually
 
 1. Open your **Terminal** application.
-2. Navigate to the directory where you downloaded the .tar.gz file using the cd command. For example, if it's in your Downloads folder:
+2. Navigate to the directory where you downloaded the .zip file using the cd command.
 
 ```bash
 cd ~/Downloads
@@ -102,8 +126,6 @@ unzip your-downloaded-file.zip
 ```
 
 This will extract the yochat executable file into the current directory.
-
-## **3\. Make yochat Globally Accessible (Recommended)**
 
 To run yochat by simply typing yochat in any terminal, you need to place its executable in a directory that is part of your system's PATH environment variable.
 
@@ -119,10 +141,10 @@ The easiest way to make yochat globally accessible is to move it to /usr/local/b
 chmod \+x yochat
 ```
 
-4. **Move the executable** to `/usr/local/bin` using `sudo` (administrator privileges are required for this location):
+4. **Move the executable** to `/home/{YOUR_USER}/.local/bin/` using `sudo` (administrator privileges are required for this location):
 
 ```bash
-sudo mv yochat /usr/local/bin/
+mv yochat /home/{YOUR_USER}/.local/bin
 ```
 
 5. **Verify the installation** by opening a **new terminal window** and typing:
@@ -132,26 +154,5 @@ yochat
 ```
 
 You should see the application's output.
-
-### **For Windows**
-
-Making an application globally accessible on Windows typically involves adding its directory to the system's Path environment variable.
-
-1. **Move the extracted yochat.exe** to a permanent location, for example, C:\\yochat.
-2. **Add the directory to your System PATH:**
-   * Search for "Environment Variables" in the Windows search bar and select "Edit the system environment variables".
-   * In the System Properties window, click the "Environment Variables..." button.
-   * Under "System variables", find the Path variable and select it, then click "Edit...".
-   * Click "New" and add the full path to the directory where you placed yochat.exe (e.g., C:\\yochat).
-   * Click "OK" on all open windows to save the changes.
-
-3. **Verify the installation** by opening a **new Command Prompt or PowerShell window** and typing:
-
-
-```bash
-yochat
-```
-
-You should see the application's output. (Note: Existing terminal windows might not reflect the PATH changes until restarted).
 
 If you encounter any issues, please refer to the project's GitHub repository for more information or to open an issue.
